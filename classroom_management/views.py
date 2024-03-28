@@ -1,7 +1,8 @@
 from django.shortcuts import render
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate,login
-from rest_framework.decorators import api_view,authentication_classes
+from rest_framework.decorators import api_view,authentication_classes,permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from .serializers import *
@@ -73,6 +74,18 @@ def Login(request):
 
     return Response({'error': 'Invalid username or password'}, status=status.HTTP_404_NOT_FOUND)
 
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def Logout(request):
+    try:
+        # This will remove the Token and thus log the user out
+        request.user.auth_token.delete()
+    except (AttributeError, Token.DoesNotExist):
+        # Handle cases where the user had no token or it was already deleted
+        return Response({'error': 'Not logged in or already logged out'}, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response({'message': 'Logged out successfully'}, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])

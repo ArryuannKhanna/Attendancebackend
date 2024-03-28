@@ -108,16 +108,12 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# At the top of your settings.py, add the import for rest_framework settings
-# from rest_framework.settings import api_settings
-#
-# # Scroll down to the appropriate place in your settings.py and add or extend the REST_FRAMEWORK configuration
-# REST_FRAMEWORK = {
-#     'DEFAULT_AUTHENTICATION_CLASSES': [
-#         'rest_framework_simplejwt.authentication.JWTAuthentication',
-#     ] + list(api_settings.DEFAULT_AUTHENTICATION_CLASSES),
-#     # include other settings like default permission classes, parsers, etc., if necessary
-# }
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    # ... other REST_FRAMEWORK settings
+}
 
 
 # Internationalization
