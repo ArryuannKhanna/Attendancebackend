@@ -7,6 +7,7 @@ from rest_framework import status
 from .serializers import *
 from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
+# from rest_framework_simplejwt.tokens import RefreshToken
 
 # Create your views here.
 @api_view(['POST'])

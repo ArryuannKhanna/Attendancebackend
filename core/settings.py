@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'classroom_management',
 ]
 
@@ -49,7 +50,12 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',  # React app running on localhost:3000
 ]
 
 ROOT_URLCONF = 'core.urls'
@@ -102,13 +108,24 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# At the top of your settings.py, add the import for rest_framework settings
+# from rest_framework.settings import api_settings
+#
+# # Scroll down to the appropriate place in your settings.py and add or extend the REST_FRAMEWORK configuration
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES': [
+#         'rest_framework_simplejwt.authentication.JWTAuthentication',
+#     ] + list(api_settings.DEFAULT_AUTHENTICATION_CLASSES),
+#     # include other settings like default permission classes, parsers, etc., if necessary
+# }
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'
 
 USE_I18N = True
 
