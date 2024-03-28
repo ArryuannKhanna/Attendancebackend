@@ -89,17 +89,22 @@ def Logout(request):
 
 
 @api_view(['GET'])
-def StudentClasses(request,id):
+@permission_classes([IsAuthenticated])
+def StudentClasses(request):
+    usr = request.user
+
+    if not usr.is_authenticated:
+        return Response({'error': 'User is not authenticated.'}, status=status.HTTP_403_FORBIDDEN)
+
     try:
-        usr = User.objects.get(username = id)
-    except User.DoesNotExist:
-        return Response({'error':'User doesnt exists!'},status=status.HTTP_404_NOT_FOUND)
-    student = Student.objects.get(user=usr)
+        student = Student.objects.get(user=usr)
+    except Student.DoesNotExist:
+        return Response({'error': 'Student not found.'}, status=status.HTTP_404_NOT_FOUND)
+
     classes = student.classes_by_students.all()
-    serializer = ClassroomSerializer(classes,many=True)
+    serializer = ClassroomSerializer(classes, many=True)
 
-    return Response(serializer.data,status=status.HTTP_202_ACCEPTED)
-
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 @api_view(['POST'])
 def StartSession(request):
