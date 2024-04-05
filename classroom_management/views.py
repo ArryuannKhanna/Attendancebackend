@@ -21,20 +21,20 @@ def CreateClassroom(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PATCH'])
-def JoinClassroom(request,id):
+@authentication_classes([TokenAuthentication])
+def JoinClassroom(request, id):
     try:
-        classroom = Classroom.objects.get(name=id)
+        classroom = Classroom.objects.get(course_code=id)
     except Classroom.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 
-    data = request.data
-    serializer = ClassroomSerializer(classroom,data,partial=True)
-
+    data = {'student': request.user.username}  # Assuming you want to add the authenticated user as a student
+    serializer = ClassroomSerializer(classroom, data=data, partial=True)
     if serializer.is_valid():
         serializer.save()
-        return Response(serializer.data,status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -93,10 +93,6 @@ def Logout(request):
 @permission_classes([IsAuthenticated])
 def StudentClasses(request):
     usr = request.user
-
-    if not usr.is_authenticated:
-        return Response({'error': 'User is not authenticated.'}, status=status.HTTP_403_FORBIDDEN)
-
     try:
         student = Student.objects.get(user=usr)
     except Student.DoesNotExist:

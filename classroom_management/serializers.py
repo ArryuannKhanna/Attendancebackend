@@ -37,6 +37,8 @@ class ClassroomSerializer(serializers.ModelSerializer):
     host_id = TeacherSerializer(read_only=True)
     students = serializers.ListField(child=serializers.CharField(),write_only=True,required=False)
     teacher = serializers.CharField(write_only=True)
+    # user = UserSerializer()
+    student = serializers.CharField(write_only=True)
     class Meta:
         model = Classroom
         fields = '__all__'
@@ -49,14 +51,15 @@ class ClassroomSerializer(serializers.ModelSerializer):
         return inst
 
     def update(self, instance, validated_data):
-        students = validated_data.pop('students',[])
-        for id in students:
+        student = validated_data.get('student')
+        if student:
             try:
-                usr = User.objects.get(username = id)
+                usr = User.objects.get(username = student)
                 student_instance = Student.objects.get(user=usr)
                 instance.students.add(student_instance)
-            except User.DoesNotExist:
-                raise serializers.ValidationError('Student doesnt exists!')
+                instance.save()
+            except (User.DoesNotExist, Student.DoesNotExist):
+                raise serializers.ValidationError('Student does not exist!')
 
         return instance
 
