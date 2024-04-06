@@ -36,19 +36,22 @@ class TeacherSerializer(serializers.ModelSerializer):
 class ClassroomSerializer(serializers.ModelSerializer):
     host_id = TeacherSerializer(read_only=True)
     students = serializers.ListField(child=serializers.CharField(),write_only=True,required=False)
-    teacher = serializers.CharField(write_only=True)
-    # user = UserSerializer()
-    student = serializers.CharField(write_only=True)
+    teacher = serializers.CharField(write_only=True,required=False)
+    student = serializers.CharField(write_only=True,required=False)
+    teacher_id = serializers.CharField(write_only=True)
     class Meta:
         model = Classroom
         fields = '__all__'
 
     def create(self, validated_data):
-        teacher_id = validated_data.pop('teacher')
-        usr = User.objects.get(username = teacher_id)
-        host =Teacher.objects.get(user=usr)
-        inst = Classroom.objects.create(host_id = host,**validated_data)
-        return inst
+        print('hello world')
+        teacher_username = validated_data.pop('teacher_id', None)
+        print(User.objects.get(username=teacher_username))
+        teacher_user = User.objects.get(username=teacher_username)
+        host = Teacher.objects.get(user=teacher_user)
+        validated_data['host_id'] = host
+        classroom = Classroom.objects.create(**validated_data)
+        return classroom
 
     def update(self, instance, validated_data):
         student = validated_data.get('student')
@@ -69,6 +72,7 @@ class ClassroomSerializer(serializers.ModelSerializer):
 class Attendance_SessionSerializer(serializers.ModelSerializer):
     classroom = serializers.CharField()
     students = serializers.ListField(child=serializers.CharField(), write_only=True, required=False)
+
     class Meta:
         model = Attendance_Session
         fields = '__all__'

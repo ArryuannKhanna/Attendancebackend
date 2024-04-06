@@ -12,12 +12,17 @@ from rest_framework.authentication import TokenAuthentication
 
 # Create your views here.
 @api_view(['POST'])
+@authentication_classes([TokenAuthentication])
 def CreateClassroom(request):
-    data = request.data
+    data = request.data.copy()
+    data['teacher_id'] = request.user.username
+    # print(data)
     serializer = ClassroomSerializer(data=data)
+    # print(serializer)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    print(serializer.errors)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PATCH'])
@@ -102,6 +107,24 @@ def StudentClasses(request):
     serializer = ClassroomSerializer(classes, many=True)
 
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def TeacherClasses(request):
+    usr = request.user
+    try:
+        teacher = Teacher.objects.get(user=usr)
+    except Teacher.DoesNotExist:
+        return Response({'error':'Teacher not found.'},status=status.HTTP_404_NOT_FOUND)
+
+    classes = teacher.classes_by_host.all()
+    serializer = ClassroomSerializer(classes,many=True)
+
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+
 
 @api_view(['POST'])
 def StartSession(request):
