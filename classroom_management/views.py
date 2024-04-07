@@ -189,4 +189,17 @@ def GetAttendance(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def GetClassInfo(request,id):
+    data = request.data
+    try:
+        classinfo = Classroom.objects.get(course_code = id)
+    except Classroom.DoesNotExist:
+        return Response({'error':'Class does not exist'},status=status.HTTP_404_NOT_FOUND)
+
+    serializer = ClassroomSerializer(classinfo)
+
+    return Response(serializer.data,status=status.HTTP_200_OK)
+
 

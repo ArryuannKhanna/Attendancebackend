@@ -8,6 +8,7 @@ urlpatterns = [
     path('studentclasses/',StudentClasses), # retrieve all the classes of a student
     path('teacherclasses/',TeacherClasses),
     path('classroomsessions/<str:id>',GetSession),
+    path('classinfo/<str:id>',GetClassInfo),
     path('registerteacher/',RegisterTeacher),
     path('registerstudent/',RegisterStudent),
     path('login/',Login),
