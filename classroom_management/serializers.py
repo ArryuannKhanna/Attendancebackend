@@ -70,6 +70,7 @@ class ClassroomSerializer(serializers.ModelSerializer):
 
 
 class Attendance_SessionSerializer(serializers.ModelSerializer):
+    user_info = serializers.SerializerMethodField()
     classroom = serializers.CharField()
     students = serializers.ListField(child=serializers.CharField(), write_only=True, required=False)
 
@@ -95,5 +96,13 @@ class Attendance_SessionSerializer(serializers.ModelSerializer):
 
         return instance
 
+    def get_user_info(self,obj):
+        user = self.context['request'].user
+
+        return {
+            'id':user.id,
+            'username': user.username,
+            'email': user.email
+        }
 
 

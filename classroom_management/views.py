@@ -122,8 +122,26 @@ def TeacherClasses(request):
 
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def GetSession(request,id):
+    try:
+        classes = Classroom.objects.get(course_code = id)
+    except Classroom.DoesNotExist:
+        return Response({'error':'Classroom does not exists'},status=status.HTTP_404_NOT_FOUND)
 
+    sessions = classes.classroom_attendance.all()
 
+    serializer = Attendance_SessionSerializer(sessions,many=True,context={'request':request})
+
+    data = serializer.data
+
+    # for item in data:
+    #     item['user_info'] = request.user
+    # print(serializer)
+
+    print(data)
+    return Response(data, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
