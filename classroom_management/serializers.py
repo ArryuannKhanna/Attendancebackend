@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import *
 from django.contrib.auth.models import User
+import face_recognition
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -11,15 +12,33 @@ class UserSerializer(serializers.ModelSerializer):
 
 class StudentSerializer(serializers.ModelSerializer):
     user = UserSerializer()
+    photo = serializers.ImageField(write_only=True)
+    encoding = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = Student
-        fields = '__all__'
+        # fields = '__all__'
+        fields = ['user','photo','encoding']
     def create(self, validated_data):
-        user_info = validated_data.pop('user')
-        usr = User.objects.create_user(**user_info)
-        instance = Student.objects.create(user = usr,**validated_data)
-        return instance
+        # print('hmm')
+        # print(validated_data)
+        user_data = validated_data.get('user')  # Assume 'user' is a JSON string
+        # print(user_data)
+        photo = validated_data.get('photo')
 
+        usr = User.objects.create_user(**user_data)
+        instance = Student.objects.create(user = usr)
+        # if photo:
+            # Process the photo and create the encoding
+        image = face_recognition.load_image_file(photo)
+        encodings = face_recognition.face_encodings(image)
+                # print(photo)
+        # print(encodings)
+        instance.set_encoding(encoding_array=list(encodings[0]))
+        instance.save()
+
+        return instance
+    def get_encoding(self,obj):
+        return obj.get_encoding()
 
 class TeacherSerializer(serializers.ModelSerializer):
     user = UserSerializer()
@@ -44,9 +63,9 @@ class ClassroomSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def create(self, validated_data):
-        print('hello world')
+        # print('hello world')
         teacher_username = validated_data.pop('teacher_id', None)
-        print(User.objects.get(username=teacher_username))
+        # print(User.objects.get(username=teacher_username))
         teacher_user = User.objects.get(username=teacher_username)
         host = Teacher.objects.get(user=teacher_user)
         validated_data['host_id'] = host
@@ -69,10 +88,17 @@ class ClassroomSerializer(serializers.ModelSerializer):
 
 
 
+
+
+
+
 class Attendance_SessionSerializer(serializers.ModelSerializer):
+
     user_info = serializers.SerializerMethodField()
     classroom = serializers.CharField()
     students = serializers.ListField(child=serializers.CharField(), write_only=True, required=False)
+    students_present = StudentSerializer(read_only=True,many=True)
+    total_students = serializers.SerializerMethodField()
 
     class Meta:
         model = Attendance_Session
@@ -80,7 +106,7 @@ class Attendance_SessionSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         classroom = validated_data.pop('classroom')
-        classroom = Classroom.objects.get(name = classroom)
+        classroom = Classroom.objects.get(course_code = classroom)
         inst = Attendance_Session.objects.create(classroom=classroom)
         return inst
 
@@ -105,4 +131,6 @@ class Attendance_SessionSerializer(serializers.ModelSerializer):
             'email': user.email
         }
 
+    def get_total_students(self, obj):
+        return obj.classroom.students.count()
 

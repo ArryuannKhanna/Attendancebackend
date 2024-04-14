@@ -1,13 +1,15 @@
 from django.shortcuts import render
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate,login
-from rest_framework.decorators import api_view,authentication_classes,permission_classes
+from rest_framework.decorators import api_view,authentication_classes,permission_classes, parser_classes
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from .serializers import *
 from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
+import json
 # from rest_framework_simplejwt.tokens import RefreshToken
 
 # Create your views here.
@@ -22,7 +24,7 @@ def CreateClassroom(request):
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    print(serializer.errors)
+    # print(serializer.errors)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PATCH'])
@@ -54,13 +56,41 @@ def RegisterTeacher(request):
     return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
+@parser_classes((MultiPartParser, FormParser, JSONParser))  # Ensure appropriate parsers are used
 def RegisterStudent(request):
     data = request.data
+    # print(data)
+    # if('user' in data and isinstance(data['user'], str)):
+    #     user_data = json.loads(data['user'])
+    #     print(user_data)
+
+    # Manually handle JSON parsing for nested 'user' data if it's coming as a string
+    if 'user' in data and isinstance(data['user'], str):
+        try:
+            # user_data = data['user']
+            user_data = json.loads(data['user'])
+            # print(dict(data['user']))
+            # Update the 'user' field in data with the parsed dictionary
+            data._mutable = True  # Required to modify the QueryDict
+            data['user'] = user_data
+            # print(user_data)
+            data._mutable = False
+            photo_data = data['photo']
+            data = {**data, 'photo': photo_data}  # Reconstruct the data with the correct 'user' format
+            # print(data)
+            data['user'] = data['user'][0]
+            # print(data)
+        except json.JSONDecodeError:
+            return Response({'user': ['Invalid JSON format']}, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response({'error': ['Wrong format babes']}, status=status.HTTP_400_BAD_REQUEST)
+
     serializer = StudentSerializer(data=data)
     if serializer.is_valid():
         serializer.save()
-        return Response(serializer.data,status=status.HTTP_202_ACCEPTED)
-    return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -122,6 +152,9 @@ def TeacherClasses(request):
 
     return Response(serializer.data, status=status.HTTP_200_OK)
 
+
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def GetSession(request,id):
@@ -140,14 +173,16 @@ def GetSession(request,id):
     #     item['user_info'] = request.user
     # print(serializer)
 
-    print(data)
+    # print(data)
     return Response(data, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def StartSession(request):
     data = request.data
-    serializer = Attendance_SessionSerializer(data=data)
+    # print(data)
+    serializer = Attendance_SessionSerializer(data=data,context={'request':request})
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data,status=status.HTTP_202_ACCEPTED)
@@ -155,9 +190,10 @@ def StartSession(request):
 
 
 @api_view(['PATCH'])
-def MarkSession(request,id):
+@permission_classes([IsAuthenticated])
+def MarkSession(request):
     try:
-        instance = Attendance_Session.objects.get(session_number = id)
+        instance = Attendance_Session.objects.last()
     except Attendance_Session.DoesNotExist:
         return Response({"error":"Attendance session doesn't exists!"},status=status.HTTP_400_BAD_REQUEST)
     serializer = Attendance_SessionSerializer(instance=instance,data=request.data,partial=True)
@@ -202,4 +238,12 @@ def GetClassInfo(request,id):
 
     return Response(serializer.data,status=status.HTTP_200_OK)
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def GetSessionHistory(request,id):
+    data = request.data
+    try:
+        classinfo = Classroom.objects.get(course_id = id)
+    except Classroom.DoesNotExist:
+        return Response({'error':'Classroom does not exists!'},status=status.HTTP_404_NOT_FOUND)
 

@@ -1,10 +1,23 @@
 from django.db import models
 from django.contrib.auth.models import User
+import json
 # Create your models here.
 
 class Student(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE,related_name='student')
-    # semester = models.IntegerField()
+    encodings = models.TextField(default='[]')
+
+    def set_encoding(self, encoding_array):
+        """
+        Store the encoding as a JSON string.
+        """
+        self.encodings = json.dumps(encoding_array)
+
+    def get_encoding(self):
+        """
+        Retrieve the encoding as a Python list (from JSON).
+        """
+        return json.loads(self.encodings)
 
 
 
