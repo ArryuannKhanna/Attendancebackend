@@ -90,6 +90,7 @@ def RegisterStudent(request):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
     else:
+        print(serializer.errors)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
